@@ -17,9 +17,10 @@ const INDEX_HTML = fs.readFileSync(path.join(__dirname, 'index.html'));
 
 // ── startup checks (visible in the platform's logs) ──────────
 let extraArgs = [];
-if (process.env.YT_COOKIES) {
+const RAW_COOKIES = process.env.YT_COOKIES || '';
+if (RAW_COOKIES.includes('Netscape HTTP Cookie File') || RAW_COOKIES.includes('\t')) {
   const cf = path.join(os.tmpdir(), 'cookies.txt');
-  fs.writeFileSync(cf, process.env.YT_COOKIES);
+  fs.writeFileSync(cf, RAW_COOKIES);
   extraArgs.push('--cookies', cf);
 }
 try {
