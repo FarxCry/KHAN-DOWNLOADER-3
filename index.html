@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khan Downloader — Free Video Downloader</title>
+<style>
+/* ── Base ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+html,body{margin:0}
+body{
+  color:#fff;min-height:100vh;
+  background:linear-gradient(135deg,#059669,#0d9488,#0891b2,#0d9488,#059669);
+  background-size:300% 300%;
+  animation:bgshift 20s ease infinite;
+}
+@keyframes bgshift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(420px circle at 12% 18%,rgba(163,230,53,.30),transparent 60%),
+    radial-gradient(480px circle at 88% 12%,rgba(34,211,238,.30),transparent 60%),
+    radial-gradient(520px circle at 70% 88%,rgba(250,204,21,.18),transparent 60%);
+}
+a{color:#fff;text-decoration:none}
+
+/* ── Nav ──────────────────────────────────────────────────────── */
+.nav{display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 20px 14px}
+.brand{font-weight:900;font-size:32px;display:inline-flex;align-items:center;gap:13px;
+  letter-spacing:.4px;
+  background:linear-gradient(90deg,#ffffff,#fde047,#34d399,#fde047,#ffffff);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  filter:drop-shadow(0 3px 16px rgba(0,0,0,.20));
+  animation:shine 5s linear infinite,float 3.6s ease-in-out infinite}
+@keyframes shine{to{background-position:200% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-block;
+  background:linear-gradient(135deg,#a3e635,#22d3ee);
+  animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 10px rgba(34,211,238,.7);transform:scale(1)}
+  50%{box-shadow:0 0 26px rgba(34,211,238,1);transform:scale(1.2)}}
+
+/* ── Main ─────────────────────────────────────────────────────── */
+main{max-width:900px;margin:0 auto;padding:46px 20px}
+.hero{text-align:center}
+h1{font-size:46px;line-height:1.12;margin:8px 0 20px;letter-spacing:-.5px;
+  text-shadow:0 4px 30px rgba(0,0,0,.25)}
+.accent{background:linear-gradient(135deg,#fde047,#fb923c);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ── White download box ───────────────────────────────────────── */
+.box{background:#fff;border:1px solid #e6e8ef;border-radius:20px;padding:20px;
+  max-width:700px;margin:0 auto;box-shadow:0 20px 55px rgba(0,0,0,.28)}
+.row{display:flex;gap:10px;align-items:flex-start}
+.row.opts{margin-top:12px;align-items:center}
+.box input{flex:1;background:#f1f3f8;color:#1b1d28;border:1px solid #e6e8ef;
+  border-radius:12px;padding:14px 16px;font-size:15px;outline:none}
+.box input::placeholder{color:#9aa1ad}
+.box input:focus{border-color:#10b981;background:#fff}
+.box .msg{color:#6b7280;font-size:13px}
+.box .msg.err{color:#dc2626}
+
+/* ── Primary button ───────────────────────────────────────────── */
+.primary{border:none;border-radius:12px;padding:14px 28px;font-size:15px;
+  font-weight:700;cursor:pointer;color:#0a3d36;
+  background:linear-gradient(135deg,#fde047,#f59e0b);
+  box-shadow:0 8px 24px rgba(245,158,11,.45);transition:transform .12s,box-shadow .12s}
+.primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(245,158,11,.6)}
+.primary:disabled{opacity:.6;cursor:default;transform:none}
+
+/* ── New link button ──────────────────────────────────────────── */
+.newlink{margin-left:auto;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px;border-radius:999px;font-size:13px;font-weight:700;
+  color:#0a3d36;border:none;
+  background:linear-gradient(135deg,#a3e635,#34d399,#22d3ee);background-size:160% 160%;
+  box-shadow:0 6px 18px rgba(16,185,129,.35);
+  transition:transform .14s ease,box-shadow .14s ease}
+.newlink::before{content:"↺";font-size:15px;font-weight:900;display:inline-block;transition:transform .5s ease}
+.newlink:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(16,185,129,.55)}
+.newlink:hover::before{transform:rotate(-360deg)}
+.newlink:active{transform:translateY(0) scale(.97)}
+.hidden{display:none!important}
+
+/* ── Result card ──────────────────────────────────────────────── */
+.result{display:flex;gap:22px;border-radius:18px;padding:24px;max-width:700px;
+  margin:26px auto 0;text-align:left;align-items:center;
+  background:#fff;border:1px solid #e6e8ef;box-shadow:0 24px 60px rgba(0,0,0,.30)}
+.result img{width:220px;height:140px;object-fit:cover;border-radius:14px;
+  background:#f1f3f8;flex:none}
+.meta{flex:1;min-width:0}
+.rtitle{font-weight:700;margin-bottom:6px;color:#1b1d28;font-size:17px;line-height:1.35}
+.ruploader{color:#6b7280;font-size:13px;margin-bottom:14px}
+.flabel{color:#6b7280;font-size:13px;margin-bottom:10px;font-weight:600}
+.formats{display:flex;flex-wrap:wrap;gap:9px}
+
+/* ── Format buttons ───────────────────────────────────────────── */
+.fbtn{padding:10px 18px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;
+  color:#0a3d36;border:none;
+  background:linear-gradient(135deg,#fde047,#f59e0b);
+  box-shadow:0 6px 16px rgba(245,158,11,.32);transition:transform .1s,box-shadow .1s}
+.fbtn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(245,158,11,.5)}
+.fbtn.audio{background:linear-gradient(135deg,#34d399,#0d9488);color:#fff;
+  box-shadow:0 6px 16px rgba(13,148,136,.35)}
+.fbtn.audio:hover{box-shadow:0 10px 22px rgba(13,148,136,.55)}
+.fbtn:disabled{opacity:.6;cursor:default;transform:none}
+
+/* ── Progress ─────────────────────────────────────────────────── */
+.progwrap{max-width:700px;margin:16px auto 0;background:rgba(255,255,255,.2);
+  border-radius:99px;height:7px;overflow:hidden}
+.progbar{height:100%;width:0%;background:linear-gradient(90deg,#a3e635,#22d3ee);
+  border-radius:99px;transition:width .4s ease}
+.progbar.indeterminate{width:38%;animation:pslide 1.2s ease-in-out infinite}
+@keyframes pslide{0%{transform:translateX(-180%)}100%{transform:translateX(400%)}}
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:28px 0 0}
+.tab{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  backdrop-filter:blur(24px);color:rgba(255,255,255,.9);font-size:14px;font-weight:600}
+.tab:hover{background:rgba(255,255,255,.20)}
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.spin{width:14px;height:14px;border:2px solid #e6e8ef;border-top-color:#10b981;
+  border-radius:50%;display:inline-block;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+footer{text-align:center;color:rgba(255,255,255,.72);font-size:13px;
+  padding:34px;margin-top:64px;border-top:1px solid rgba(255,255,255,.15)}
+.fdisc{max-width:700px;margin:0 auto;font-size:12px;line-height:1.6;color:rgba(255,255,255,.5)}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media(max-width:560px){
+  h1{font-size:30px}
+  .result{flex-direction:column}
+  .result img{width:100%;height:180px}
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <span class="brand"><span class="dot"></span> Khan Downloader</span>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Download any video <span class="accent">free &amp; fast</span></h1>
+
+    <!-- Download box -->
+    <div class="box">
+      <div class="row">
+        <input id="url" type="text" placeholder="Paste any video link here… YouTube, TikTok, Instagram…" autocomplete="off">
+        <button id="go" class="primary" onclick="run()">Download</button>
+      </div>
+      <div class="row opts">
+        <span id="msg" class="msg"></span>
+        <button id="newlink" class="newlink hidden" onclick="resetUI()">New link</button>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progwrap hidden" id="progwrap">
+      <div class="progbar indeterminate" id="progbar"></div>
+    </div>
+
+    <!-- Result card -->
+    <div class="result hidden" id="result">
+      <img id="thumb" alt="thumbnail" onerror="this.style.display='none'">
+      <div class="meta">
+        <div class="rtitle" id="rtitle"></div>
+        <div class="ruploader" id="ruploader"></div>
+        <div class="flabel">Download as:</div>
+        <div class="formats" id="formats"></div>
+      </div>
+    </div>
+
+    <!-- Platform tabs -->
+    <div class="tabs">
+      <span class="tab">▶️ YouTube</span>
+      <span class="tab">📘 Facebook</span>
+      <span class="tab">📸 Instagram</span>
+      <span class="tab">🎵 TikTok</span>
+      <span class="tab">🐦 Twitter / X</span>
+      <span class="tab">🌐 1000+ sites</span>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p class="fdisc">Khan Downloader does not host any videos. It only helps you save public content for personal use.<br>Powered by yt-dlp.</p>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const msg = (t, err=false) => {
+  $('msg').textContent = t;
+  $('msg').className = 'msg' + (err ? ' err' : '');
+};
+const fmtDur = s => {
+  if (!s) return '';
+  s = Math.round(s);
+  const m = Math.floor(s / 60), x = s % 60;
+  return ' · ' + m + ':' + String(x).padStart(2, '0');
+};
+
+let CUR_URL = '';
+let CUR_TITLE = '';
+
+// Fetch wrapper: sends saved password, asks for it if server says 401
+async function apiFetch(path, opts = {}) {
+  let r;
+  for (let i = 0; i < 3; i++) {
+    opts.headers = Object.assign({}, opts.headers, {
+      'x-access-key': localStorage.getItem('kd_key') || ''
+    });
+    r = await fetch(path, opts);
+    if (r.status !== 401) return r;
+    const p = prompt('Password daalo:');
+    if (!p) return r;
+    localStorage.setItem('kd_key', p);
+  }
+  return r;
+}
+
+// Auto-paste on load
+window.addEventListener('load', () => {
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText().then(t => {
+      if (/^https?:\/\/.+\..+/i.test(t.trim())) {
+        $('url').value = t.trim();
+        msg('Link detected from clipboard — click Download!');
+      }
+    }).catch(() => {});
+  }
+});
+
+// Auto-run on paste
+$('url').addEventListener('paste', () => {
+  setTimeout(() => {
+    const v = $('url').value.trim();
+    if (v && v !== CUR_URL && /^https?:\/\/.+\..+/i.test(v)) run();
+  }, 80);
+});
+
+$('url').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+function setLoading(on) {
+  $('go').disabled = on;
+  $('go').textContent = on ? 'Reading…' : 'Download';
+  $('progwrap').classList.toggle('hidden', !on);
+}
+
+async function run() {
+  const url = $('url').value.trim();
+  if (!url) { msg('Paste a link first.', true); return; }
+
+  setLoading(true);
+  msg('Reading link…');
+  $('result').classList.add('hidden');
+
+  try {
+    const r = await apiFetch('/api/info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await r.json();
+
+    if (!r.ok) {
+      msg(data.error || 'Failed to read video info.', true);
+      return;
+    }
+
+    CUR_URL = url;
+    $('url').value = '';
+    showResult(data, url);
+    $('newlink').classList.remove('hidden');
+
+  } catch (e) {
+    msg('Network error — is the server running?', true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function showResult(data, url) {
+  CUR_TITLE = data.title || '';
+  $('thumb').src = data.thumbnail || '';
+  $('rtitle').textContent = data.title || 'Video';
+  $('ruploader').textContent =
+    (data.uploader ? 'by ' + data.uploader : '') + fmtDur(data.duration);
+
+  // Build quality buttons
+  const qualities = [
+    ['best',  'Best Quality', false],
+    ['1080',  '1080p',        false],
+    ['720',   '720p',         false],
+    ['480',   '480p',         false],
+    ['360',   '360p',         false],
+    ['audio', 'MP3 Audio',    true ],
+  ];
+
+  $('formats').innerHTML = qualities.map(([q, label, isAudio]) =>
+    `<button class="fbtn${isAudio ? ' audio' : ''}" onclick="startDownload('${q}',this)">${label}</button>`
+  ).join('');
+
+  $('result').classList.remove('hidden');
+  msg('');
+}
+
+async function startDownload(quality, btn) {
+  const url = CUR_URL;
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Preparing…';
+  msg('Downloading — this may take a minute for large videos…');
+
+  try {
+    const r = await apiFetch(
+      '/download?url=' + encodeURIComponent(url) + '&quality=' + quality + '&name=' + encodeURIComponent(CUR_TITLE),
+      { signal: AbortSignal.timeout(1800000) }  // 30 min max
+    );
+
+    if (!r.ok) {
+      const err = await r.text();
+      msg(err || 'Download failed.', true);
+      return;
+    }
+
+    // Get filename from Content-Disposition header if available
+    const cd = r.headers.get('Content-Disposition') || '';
+    let filename = quality === 'audio' ? 'khan-download.mp3' : 'khan-download.mp4';
+    const m = cd.match(/filename\*?=(?:UTF-8'')?([^;\r\n]+)/i);
+    if (m) filename = decodeURIComponent(m[1].replace(/['"]/g, ''));
+
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    msg('Download complete!');
+
+  } catch (e) {
+    msg('Error: ' + (e.message || 'Something went wrong.'), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+function resetUI() {
+  CUR_URL = '';
+  $('url').value = '';
+  $('result').classList.add('hidden');
+  $('newlink').classList.add('hidden');
+  msg('');
+  $('url').focus();
+}
+</script>
+</body>
+</html>
