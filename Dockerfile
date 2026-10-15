@@ -1,12 +1,14 @@
 FROM node:20-slim
 
+# python3 is needed for the yt-dlp script; ffmpeg for audio/MP3 conversion
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl \
+ && apt-get install -y --no-install-recommends python3 ffmpeg ca-certificates curl \
  && rm -rf /var/lib/apt/lists/*
 
-# Latest yt-dlp standalone binary
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp \
- && chmod a+rx /usr/local/bin/yt-dlp
+# yt-dlp as a Python script: works on ANY CPU (x86 or ARM)
+RUN curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+ && chmod a+rx /usr/local/bin/yt-dlp \
+ && yt-dlp --version
 
 WORKDIR /app
 COPY package.json server.js index.html ./
